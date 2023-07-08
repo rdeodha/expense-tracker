@@ -37,7 +37,7 @@ Expense Tracker respects your privacy and takes data security seriously. The app
 
 ## License
 
-Expense Tracker is licensed under the [MIT License](https://opensource.org/licenses/MIT). You are free to use, modify, and distribute the app in accordance with the terms specified in the license.
+Expense Tracker is licensed under the [MIT License](https://github.com/rdeodha/expense-tracker/blob/main/LICENSE.txt). You are free to use, modify, and distribute the app in accordance with the terms specified in the license.
 
 ## Acknowledgments
 
