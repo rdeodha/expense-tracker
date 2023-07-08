@@ -23,6 +23,8 @@ function App() {
     const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false);
     const [expenseReports, setExpenseReports] = useState([]);
 
+
+
     const handleClientLoad = () => {
         gapi.load('client:auth2', initClient);
     }
@@ -36,6 +38,26 @@ function App() {
         setSignedInUser(null);
         setExpenseReports([]);
     };
+
+    const getGoogleDriveContents = async (queryParams) => {
+        let nextPageToken = null;
+        let includePageToken = false;
+        let dataArray = [];
+
+        do {
+            if (includePageToken) {
+                queryParams.pageToken = nextPageToken
+            } else {
+                includePageToken = true;
+            }
+
+            const data = await gapi.client.drive.files.list(queryParams);
+            dataArray = dataArray.concat(data.result.files)
+            nextPageToken = data.result?.nextPageToken;
+        } while (nextPageToken);
+
+        return dataArray.reverse();
+    }
 
     /**
      *  Initializes the API client library and sets up sign-in state
@@ -79,7 +101,7 @@ function App() {
         let folderID;
 
         let data = await gapi.client.drive.files.list({
-            q: 'mimeType=\'application/vnd.google-apps.folder\' and name=\'expense-tracker\' and trashed=false',
+            q: `mimeType='application/vnd.google-apps.folder' and name='expense-tracker' and trashed=false`,
             fields: 'files(id, name)',
         });
 
@@ -89,7 +111,13 @@ function App() {
 
         folderID = data?.result?.files[0]?.id;
 
-        await getExpenseReports(folderID);
+        const queryParams = {
+            q: `mimeType=\'application/vnd.google-apps.folder\' and '${folderID}' in parents`,
+            fields: 'files(id, name, mimeType), nextPageToken',
+            pageSize: 20
+        }
+
+        setExpenseReports(await getGoogleDriveContents(queryParams));
     };
 
     /**
@@ -113,37 +141,6 @@ function App() {
         return null;
     }
 
-    /**
-     * Gets expense reports
-     */
-    const getExpenseReports = async (folderID) => {
-        let nextPageToken = null;
-        let includePageToken = false;
-        let allExpenseReports = [];
-
-        do {
-            const queryParams = {
-                q: `'${folderID}' in parents`,
-                fields: 'files(id, name, mimeType), nextPageToken',
-                pageSize: 20
-            }
-
-            if (includePageToken) {
-                queryParams.pageToken = nextPageToken;
-            } else {
-                includePageToken = true;
-            }
-
-            const data = await gapi.client.drive.files.list(queryParams);
-
-            allExpenseReports = allExpenseReports.concat(data.result.files);
-
-            nextPageToken = data.result?.nextPageToken;
-        } while (nextPageToken);
-
-        setExpenseReports(allExpenseReports.reverse());
-    }
-
     return (
         <>
             <Navbar 
@@ -152,6 +149,7 @@ function App() {
                 signInStatus={isGoogleSignedIn}
             />
             <DataView 
+                getGoogleDriveContents={getGoogleDriveContents}
                 expenseReports={expenseReports}
             />
         </>

@@ -1,17 +1,25 @@
-import React from 'react'
-import './DataView.css'
+import React, { useState } from 'react';
 
-export default function DataView({ expenseReports }) {
+import './DataView.css'
+import ExpenseView from '../ExpenseView/ExpenseView';
+import ExpenseDetail from '../ExpenseDetail/ExpenseDetail';
+
+export default function DataView({ getGoogleDriveContents, expenseReports }) {
+    const [selectedExpenseReport, setSelectedExpenseReport] = useState(null);
+
     return (
         <>
-            <div className='dataView'>
-                {expenseReports.map((report) => {
-                    return (
-                        <div className='dataCards'>
-                            <h4><b>{report.name}</b></h4>
-                        </div>
-                    )
-                })}
+            <div className='expenseView'>
+                <ExpenseView 
+                    expenseReports={expenseReports}
+                    setSelectedExpenseReport={setSelectedExpenseReport}
+                />
+            </div>
+            <div className='expenseDetail'>
+                <ExpenseDetail 
+                    selectedExpenseReport={selectedExpenseReport}
+                    getGoogleDriveContents={getGoogleDriveContents}
+                />
             </div>
         </>
     )
