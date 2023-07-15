@@ -23,9 +23,15 @@ Expense Tracker is an app designed to help you manage your expenses effectively.
 ## Getting Started
 
 This app is meant to be self-hosted. Perhaps in the future, I will create a mobile app or have hosted website. That being said, for now, if you want to use this app there are a few steps required to properly get google OAuth working.
-1.
-2.
-3.
+
+1. Clone this repo onto the device you want to host this app.
+2. Go to the [Google Cloud Console](https://console.cloud.google.com) and login any Google account.
+3. Create a new project, and name it whatever you want. An easy name would be "expense-tracker".
+4. Go to "APIs & Services". On the side bar click on OAuth concent screen. Under "User Type" click on "External" then click "Create".
+5. Under the "App Name" give it any name, perferable "expense-tracker". Enter your Google email as a "User support email". Under "Developer contact information" enter your email again. At the bottom click "SAVE AND CONTINUE" until you see the message "BACK TO DASHBOARD".
+6. 
+
+
 
 ## Support and Feedback
 
