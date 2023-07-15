@@ -1,38 +1,28 @@
-.App {
-  text-align: center;
+/* Customize the scrollbar */
+/* WebKit-based browsers */
+::-webkit-scrollbar {
+  width: 3px; /* Set the width of the scrollbar */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+::-webkit-scrollbar-thumb {
+  background-color: #90CAF9; /* Set the color of the scrollbar thumb */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background-color: #42a5f5; /* Set the color of the scrollbar thumb on hover */
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+/* Mozilla Firefox */
+/* Note: Firefox supports scrollbar customization only in Nightly builds at the moment */
+/* You may need to enable 'layout.css.scrollbar-color.enabled' in 'about:config' */
+* {
+  scrollbar-color: #555 transparent; /* Set the color of the scrollbar thumb */
 }
 
-.App-link {
-  color: #61dafb;
+*::-moz-scrollbar-thumb {
+  background-color: #555; /* Set the color of the scrollbar thumb */
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+*::-moz-scrollbar-thumb:hover {
+  background-color: #888; /* Set the color of the scrollbar thumb on hover */
 }

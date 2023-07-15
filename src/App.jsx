@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { gapi } from 'gapi-script';
 
 import DataView from './Components/DataView/DataView';
 import Navbar from './Components/Navbar/Navbar';
 
-import './App.css';
-
-
+import './App.css'
 // Client ID and API key from the Developer Console
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID;
 const API_KEY = import.meta.env.VITE_GOOGLE_DRIVE_API_KEY;
@@ -19,14 +17,16 @@ const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/r
 const SCOPES = 'https://www.googleapis.com/auth/drive';
 
 function App() {
-    const [signedInUser, setSignedInUser] = useState(null);
+    // const [signedInUser, setSignedInUser] = useState(null);
     const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false);
-    const [expenseReports, setExpenseReports] = useState([]);
-
-
+    const [expenseCollections, setExpenseCollections] = useState([]);
+    const [rootFolderID, setRootFolderID] = useState('');
+    const [isLoadingData, setIsLoadingData] = useState(false);
 
     const handleClientLoad = () => {
+        setIsLoadingData(true);
         gapi.load('client:auth2', initClient);
+        setIsLoadingData(false);
     }
 
     /**
@@ -35,11 +35,11 @@ function App() {
     const handleSignOutClick = async () => {
         await gapi.auth2.getAuthInstance().signOut();
         setIsGoogleSignedIn(false);
-        setSignedInUser(null);
-        setExpenseReports([]);
+        // setSignedInUser(null);
+        setExpenseCollections([]);
     };
 
-    const getGoogleDriveContents = async (queryParams) => {
+    const getGoogleDriveContents = async (queryParams, includeMorePages = true) => {
         let nextPageToken = null;
         let includePageToken = false;
         let dataArray = [];
@@ -54,9 +54,79 @@ function App() {
             const data = await gapi.client.drive.files.list(queryParams);
             dataArray = dataArray.concat(data.result.files)
             nextPageToken = data.result?.nextPageToken;
-        } while (nextPageToken);
+        } while (nextPageToken && includeMorePages);
 
-        return dataArray.reverse();
+        return dataArray;
+    }
+
+    const createGoogleDriveObject = async (queryParams) => {
+        try {
+            return await gapi.client.drive.files.create(queryParams);
+        } catch (error) {
+            console.log(error)
+            return null;
+        }
+    };
+
+    const getGoogleDriveFileContents = async (queryParams) => {
+        try {
+            const response = await gapi.client.drive.files.get(queryParams);
+            return response.body;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    }
+
+    const createNewExpenseCollection = async (queryParams) => {
+        const response = await gapi.client.drive.files.create({
+            resource: queryParams,
+            fields: 'id'
+        });
+
+        const newQueryParams = {
+            q: `mimeType='application/vnd.google-apps.folder' and '${rootFolderID}' in parents and trashed=false`,
+            fields: 'files(id, name, mimeType), nextPageToken',
+            orderBy: 'name',
+            pageSize: 100
+        }
+
+        setExpenseCollections(await getGoogleDriveContents(newQueryParams))
+
+        return response.result.id;
+    }
+
+    const deleteGoogleDriveResource = async (fileId) => {
+        try {
+            return await gapi.client.drive.files.delete(
+                {
+                   fileId
+                }
+            );
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    }
+
+    const deleteAllFileIDsInsideFolder = async (rootFolderID) => {
+        const queryParams = {
+            q: `'${rootFolderID}' in parents and trashed=false`,
+            fields: 'files(id, mimeType), nextPageToken',
+            pageSize: 100,
+        }
+
+        const subFiles = await getGoogleDriveContents(queryParams);
+
+        for (const file of subFiles) {
+            if (file.mimeType !== 'application/vnd.google-apps.folder') {
+                await deleteGoogleDriveResource(file.id);
+            } else {
+                await deleteAllFileIDsInsideFolder(file.id);
+            }
+        }
+
+        await deleteGoogleDriveResource(rootFolderID);
     }
 
     /**
@@ -89,7 +159,7 @@ function App() {
 
         setIsGoogleSignedIn(gapi.auth2.getAuthInstance().isSignedIn.get());
         // Set the signed in user
-        setSignedInUser(gapi.auth2.getAuthInstance().currentUser.c2.value);
+        // setSignedInUser(gapi.auth2.getAuthInstance().currentUser.c2.value);
         // list files if user is authenticated
         findExpenseTrackerFolder();
     };
@@ -98,8 +168,8 @@ function App() {
      * Print files.
      */
     const findExpenseTrackerFolder = async () => {
+        setIsLoadingData(true);
         let folderID;
-
         let data = await gapi.client.drive.files.list({
             q: `mimeType='application/vnd.google-apps.folder' and name='expense-tracker' and trashed=false`,
             fields: 'files(id, name)',
@@ -110,14 +180,17 @@ function App() {
         }
 
         folderID = data?.result?.files[0]?.id;
+        setRootFolderID(folderID);
 
         const queryParams = {
-            q: `mimeType=\'application/vnd.google-apps.folder\' and '${folderID}' in parents`,
+            q: `mimeType='application/vnd.google-apps.folder' and '${folderID}' in parents and trashed=false`,
             fields: 'files(id, name, mimeType), nextPageToken',
-            pageSize: 20
+            orderBy: 'name',
+            pageSize: 100
         }
 
-        setExpenseReports(await getGoogleDriveContents(queryParams));
+        setExpenseCollections(await getGoogleDriveContents(queryParams));
+        setIsLoadingData(false);
     };
 
     /**
@@ -129,16 +202,7 @@ function App() {
             mimeType: 'application/vnd.google-apps.folder',
         };
 
-        try {
-            return data = await gapi.client.drive.files.create({
-                resource: fileMetadata,
-                fields: 'id',
-            });
-        } catch (error) {
-            console.log(error);
-        }
-
-        return null;
+        return createGoogleDriveObject(fileMetadata);
     }
 
     return (
@@ -147,10 +211,20 @@ function App() {
                 handleGoogleOAuthSignIn={handleClientLoad}
                 handleGoogleOAuthSignOut={handleSignOutClick}
                 signInStatus={isGoogleSignedIn}
+                isLoadingData={isLoadingData}
             />
             <DataView 
                 getGoogleDriveContents={getGoogleDriveContents}
-                expenseReports={expenseReports}
+                createGoogleDriveObject={createGoogleDriveObject}
+                getGoogleDriveFileContents={getGoogleDriveFileContents}
+                createNewExpenseCollection={createNewExpenseCollection}
+                setExpenseCollections={setExpenseCollections}
+                setIsLoadingData={setIsLoadingData}
+                deleteAllFileIDsInsideFolder={deleteAllFileIDsInsideFolder}
+                expenseCollections={expenseCollections}
+                signInStatus={isGoogleSignedIn}
+                rootFolderID={rootFolderID}
+                
             />
         </>
     );
