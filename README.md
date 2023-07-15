@@ -52,6 +52,7 @@ Expense Tracker is built with the support of various open-source libraries and f
 - [Google Drive API](https://developers.google.com/drive)
 - [Material UI](https://mui.com/)
 - [React.js](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
 - [Node.js](https://nodejs.org/)
 
 Thank you for using Expense Tracker! I hope it helps you take control of your expenses and achieve your financial goals.
