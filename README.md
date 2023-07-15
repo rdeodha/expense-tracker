@@ -50,6 +50,7 @@ Expense Tracker is licensed under the [MIT License](https://github.com/rdeodha/e
 Expense Tracker is built with the support of various open-source libraries and frameworks. We extend our gratitude to the developers and contributors of these projects for their valuable work.
 
 - [Google Drive API](https://developers.google.com/drive)
+- [Material UI](https://mui.com/)
 - [React.js](https://reactjs.org/)
 - [Node.js](https://nodejs.org/)
 
